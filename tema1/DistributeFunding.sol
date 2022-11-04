@@ -35,7 +35,6 @@ contract DistributeFunding {
 
 }
 
-pragma solidity >=0.8.0 <=0.8.15;
 
 contract CrowdFunding {
     uint public fundingGoal;
