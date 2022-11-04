@@ -13,9 +13,10 @@ contract CrowdFunding {
     enum State { Unfunded, Prefinanced, Financed }
     State currentState;
 
-    constructor(uint _fundingGoal, address payable _sponsorFundingAddress) {
+    constructor(uint _fundingGoal, address payable _sponsorFundingAddress, address payable _distributeFundingAddress) {
         fundingGoal = _fundingGoal;
         sponsorFundingAddress = _sponsorFundingAddress;
+        distributeFundingAddress = _distributeFundingAddress;
         currentState = State.Unfunded;
         owner = msg.sender;
     }
@@ -28,23 +29,20 @@ contract CrowdFunding {
         }
     }
 
-    function withdraw(uint amount) external payable {
+    function withdraw(uint amount) external {
         require(currentState == State.Unfunded, "Can't withdraw anymore !");
         require(contributors[msg.sender] > amount, "Not enough funds !");
         contributors[msg.sender] -= amount;
         payable(msg.sender).transfer(amount);
     }
 
-    function sendAllToDistributeFunding() external payable onlyOwner {
+    function sendAllToDistributeFunding() external onlyOwner {
         require(currentState == State.Financed, "Can't send yet !");
-        payable(distributeFundingAddress).transfer(address(this).balance);
+        DistributeFunding distributer = DistributeFunding(distributeFundingAddress);
+        distributer.receiveFunds{value:address(this).balance}();
     }
 
-    function setDistributeFundingAddress(address payable _distributeFundingAddress) public onlyOwner{
-        distributeFundingAddress = _distributeFundingAddress;
-    }
-
-    function getSponsorship() public payable onlyOwner {
+    function getSponsorship() public onlyOwner {
         require(currentState == State.Prefinanced, "Can't get sponsorship anymore !");
     
         SponsorFunding sponsorFunding = SponsorFunding(sponsorFundingAddress);
@@ -52,15 +50,21 @@ contract CrowdFunding {
         currentState = State.Financed;
     }
 
-    function getBalance() public view returns (uint) {
-        return address(this).balance;
+    function getState() external view returns(string memory){
+        if (currentState == State.Unfunded)
+            return "Unfunded";
+        else if (currentState == State.Prefinanced)
+            return "Prefinanced";
+        else 
+            return "Financed";
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner,"Only the owner can do this!");
         _;
     }
 
     receive() external payable {}
     fallback() external {}
+    
 }
