@@ -49,8 +49,12 @@ contract SampleToken {
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
+        require(_value >= 0);
+        require(balanceOf[msg.sender] >= _value);
+
         emit Approval(msg.sender, _spender, _value);
         allowance[msg.sender][_spender] = _value;
+        
         return true;
     }
 
@@ -76,6 +80,7 @@ contract SampleToken {
         require(tokensSinceLastMint >= 10000);
 
         uint256 tokensToMint = tokensSinceLastMint / 10000;
+        totalSupply += tokensToMint;
         balanceOf[owner] += tokensToMint;
         tokensSinceLastMint -= tokensToMint * 10000;
     }
@@ -105,11 +110,11 @@ contract SampleTokenSale {
         tokensSold += _numberOfTokens;
     }
 
-    function approveAmount(uint256 _numberOfTokens) public returns(bool){
-        require(tokenContract.balanceOf(msg.sender) >= _numberOfTokens);
-        require(tokenContract.approve(address(this), _numberOfTokens));
-        return true;
-    }
+    // function approveAmount(uint256 _numberOfTokens) public returns(bool){
+    //     require(tokenContract.balanceOf(msg.sender) >= _numberOfTokens);
+    //     require(tokenContract.approve(address(this), _numberOfTokens));
+    //     return true;
+    // }
 
     function buyTokensDirect(uint256 _numberOfTokens) public payable {
         require(msg.value >= _numberOfTokens * tokenPrice);
