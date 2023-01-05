@@ -24,7 +24,7 @@ contract SampleToken {
     mapping (address => mapping(address => uint256)) public allowance;
 
     constructor (uint256 _initialSupply) {
-        require(_initialSupply > 0);
+        require(_initialSupply > 0, "Initial supply < 0!");
 
         balanceOf[msg.sender] = _initialSupply;
         totalSupply = _initialSupply;
@@ -35,7 +35,7 @@ contract SampleToken {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[msg.sender] >= _value, "not enough token in balance");
 
         emit Transfer(msg.sender, _to, _value);
         balanceOf[msg.sender] -= _value;
@@ -49,8 +49,8 @@ contract SampleToken {
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
-        require(_value >= 0);
-        require(balanceOf[msg.sender] >= _value);
+        require(_value >= 0, "Value can't be negative");
+        require(balanceOf[msg.sender] >= _value, "Not enough tokens in balance");
 
         emit Approval(msg.sender, _spender, _value);
         allowance[msg.sender][_spender] = _value;
@@ -59,8 +59,8 @@ contract SampleToken {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= balanceOf[_from]);
-        require(_value <= allowance[_from][msg.sender]);
+        require(_value <= balanceOf[_from],  "Not enough tokens in balance");
+        require(_value <= allowance[_from][msg.sender],  "Not enough allowance for transfer");
 
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
@@ -77,7 +77,7 @@ contract SampleToken {
     }
 
     function mintTokens() public{
-        require(tokensSinceLastMint >= 10000);
+        require(tokensSinceLastMint >= 10000, "Not enough transfered tokens to mint new ones");
 
         uint256 tokensToMint = tokensSinceLastMint / 10000;
         totalSupply += tokensToMint;
@@ -97,7 +97,7 @@ contract SampleTokenSale {
     event Sell(address indexed _buyer, uint256 indexed _amount);
 
     constructor(SampleToken _tokenContract, uint256 _tokenPrice) {
-        require(_tokenPrice >= 0);
+        require(_tokenPrice >= 0, "Price can't be negative!");
 
         owner = msg.sender;
         tokenContract = _tokenContract;
@@ -105,18 +105,18 @@ contract SampleTokenSale {
     }
 
     function buyTokens(uint256 _numberOfTokens) public payable {
-        require(msg.value == _numberOfTokens * tokenPrice);
-        require(tokenContract.balanceOf(address(this)) >= _numberOfTokens);
-        require(tokenContract.transfer(msg.sender, _numberOfTokens));
+        require(msg.value == _numberOfTokens * tokenPrice, "Not enough wei to buy tokens!");
+        require(tokenContract.balanceOf(address(this)) >= _numberOfTokens, "Not enough tokesn in ballance to sell");
+        require(tokenContract.transfer(msg.sender, _numberOfTokens), "Token transfer failed!");
 
         emit Sell(msg.sender, _numberOfTokens);
         tokensSold += _numberOfTokens;
     }
 
     function buyTokensDirect(uint256 _numberOfTokens) public payable {
-        require(msg.value >= _numberOfTokens * tokenPrice);
-        require(tokenContract.balanceOf(owner) >= _numberOfTokens);
-        require(tokenContract.transferFrom(owner,msg.sender, _numberOfTokens));
+        require(msg.value >= _numberOfTokens * tokenPrice, "Not enough wei to buy tokens!");
+        require(tokenContract.balanceOf(owner) >= _numberOfTokens, "Not enough tokesn in ballance to sell");
+        require(tokenContract.transferFrom(owner,msg.sender, _numberOfTokens), "Token transfer failed!");
         
         emit Sell(msg.sender, _numberOfTokens);
         tokensSold += _numberOfTokens;
@@ -126,14 +126,15 @@ contract SampleTokenSale {
     }
 
     function endSale() public {
-        require(tokenContract.transfer(owner, tokenContract.balanceOf(address(this))));
-        require(msg.sender == owner);
+        require(tokenContract.transfer(owner, tokenContract.balanceOf(address(this))), "Token transfer failed!");
+        require(msg.sender == owner,  "Only the owner can end the sale");
+
         payable(msg.sender).transfer(address(this).balance);
     }
 
     function changePrice(uint256 _newPrice) public {
-        require(msg.sender == owner);
-        require(_newPrice >= 0);
+        require(msg.sender == owner, "Only the owner can change the price");
+        require(_newPrice >= 0, "Price can't be negative");
 
         tokenPrice = _newPrice;
     }
