@@ -97,6 +97,8 @@ contract SampleTokenSale {
     event Sell(address indexed _buyer, uint256 indexed _amount);
 
     constructor(SampleToken _tokenContract, uint256 _tokenPrice) {
+        require(_tokenPrice >= 0);
+
         owner = msg.sender;
         tokenContract = _tokenContract;
         tokenPrice = _tokenPrice;
@@ -106,15 +108,10 @@ contract SampleTokenSale {
         require(msg.value == _numberOfTokens * tokenPrice);
         require(tokenContract.balanceOf(address(this)) >= _numberOfTokens);
         require(tokenContract.transfer(msg.sender, _numberOfTokens));
+
         emit Sell(msg.sender, _numberOfTokens);
         tokensSold += _numberOfTokens;
     }
-
-    // function approveAmount(uint256 _numberOfTokens) public returns(bool){
-    //     require(tokenContract.balanceOf(msg.sender) >= _numberOfTokens);
-    //     require(tokenContract.approve(address(this), _numberOfTokens));
-    //     return true;
-    // }
 
     function buyTokensDirect(uint256 _numberOfTokens) public payable {
         require(msg.value >= _numberOfTokens * tokenPrice);
@@ -124,7 +121,7 @@ contract SampleTokenSale {
         emit Sell(msg.sender, _numberOfTokens);
         tokensSold += _numberOfTokens;
         uint256 amountToReturn = msg.value - ( _numberOfTokens * tokenPrice);
-
+        
         payable(msg.sender).transfer(amountToReturn);
     }
 
@@ -137,6 +134,7 @@ contract SampleTokenSale {
     function changePrice(uint256 _newPrice) public {
         require(msg.sender == owner);
         require(_newPrice >= 0);
+
         tokenPrice = _newPrice;
     }
 }
