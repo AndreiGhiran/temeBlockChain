@@ -77,7 +77,7 @@ contract SampleToken {
     }
 
     function mintTokens() public{
-        require(tokensSinceLastMint >= 10000, "Not enough transfered tokens to mint new ones");
+        require(tokensSinceLastMint >= 10000, "Not enough transferred tokens to mint new ones");
 
         uint256 tokensToMint = tokensSinceLastMint / 10000;
         totalSupply += tokensToMint;
@@ -105,17 +105,8 @@ contract SampleTokenSale {
     }
 
     function buyTokens(uint256 _numberOfTokens) public payable {
-        require(msg.value == _numberOfTokens * tokenPrice, "Not enough wei to buy tokens!");
-        require(tokenContract.balanceOf(address(this)) >= _numberOfTokens, "Not enough tokesn in ballance to sell");
-        require(tokenContract.transfer(msg.sender, _numberOfTokens), "Token transfer failed!");
-
-        emit Sell(msg.sender, _numberOfTokens);
-        tokensSold += _numberOfTokens;
-    }
-
-    function buyTokensDirect(uint256 _numberOfTokens) public payable {
         require(msg.value >= _numberOfTokens * tokenPrice, "Not enough wei to buy tokens!");
-        require(tokenContract.balanceOf(owner) >= _numberOfTokens, "Not enough tokesn in ballance to sell");
+        require(tokenContract.balanceOf(owner) >= _numberOfTokens, "Not enough tokens in ballance to sell");
         require(tokenContract.transferFrom(owner,msg.sender, _numberOfTokens), "Token transfer failed!");
         
         emit Sell(msg.sender, _numberOfTokens);
